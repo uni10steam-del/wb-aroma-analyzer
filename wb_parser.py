@@ -6,18 +6,13 @@ from typing import List, Dict, Optional, Any
 from dateutil import parser as date_parser
 from collections import Counter
 
-DEFAULT_HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/124.0.0.0 Safari/537.36"
-    ),
-    "Accept": "application/json, text/plain, */*",
-    "Accept-Language": "ru-RU,ru;q=0.9,en-US;q=0.8",
-    "Referer": "https://www.wildberries.ru/catalog/0/search.aspx",
-    "Origin": "https://www.wildberries.ru",
-    "Connection": "keep-alive",
-}
+USER_AGENTS = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:125.0) Gecko/20100101 Firefox/125.0",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Safari/605.1.15",
+]
 
 SEARCH_URL = (
     "https://search.wb.ru/exactmatch/ru/common/v4/search"
@@ -33,24 +28,38 @@ FEEDBACK_URL = (
     "?take={take}&skip={skip}&order=date&isSorted=true"
 )
 
-REQUEST_SEMAPHORE = asyncio.Semaphore(3)
+REQUEST_SEMAPHORE = asyncio.Semaphore(2)
+
+
+def get_headers():
+    return {
+        "User-Agent": random.choice(USER_AGENTS),
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "ru-RU,ru;q=0.9,en-US;q=0.8",
+        "Referer": "https://www.wildberries.ru/catalog/0/search.aspx",
+        "Origin": "https://www.wildberries.ru",
+        "Connection": "keep-alive",
+    }
+
 
 async def _fetch(client: httpx.AsyncClient, url: str, retries: int = 2) -> Optional[dict]:
     for attempt in range(retries + 1):
         try:
             async with REQUEST_SEMAPHORE:
-                await asyncio.sleep(random.uniform(0.6, 1.2))
-                resp = await client.get(url, headers=DEFAULT_HEADERS, timeout=20.0)
+                await asyncio.sleep(random.uniform(2.0, 4.0))
+                resp = await client.get(url, headers=get_headers(), timeout=25.0)
                 if resp.status_code == 200:
                     return resp.json()
                 if resp.status_code in (403, 429, 503):
-                    await asyncio.sleep(2 ** attempt + random.uniform(0, 1))
+                    wait_time = (2 ** attempt) * 3 + random.uniform(1, 3)
+                    await asyncio.sleep(wait_time)
         except Exception:
             if attempt < retries:
-                await asyncio.sleep(1.5)
+                await asyncio.sleep(2.0)
     return None
 
-async def search_wb(client: httpx.AsyncClient, query: str, pages: int = 2) -> List[Dict[str, Any]]:
+
+async def search_wb(client: httpx.AsyncClient, query: str, pages: int = 1) -> List[Dict[str, Any]]:
     products = []
     for page in range(1, pages + 1):
         url = SEARCH_URL.format(page=page, query=query.replace(" ", "%20"))
@@ -70,6 +79,7 @@ async def search_wb(client: httpx.AsyncClient, query: str, pages: int = 2) -> Li
             })
     return products
 
+
 async def get_card_details(client: httpx.AsyncClient, article_id: int) -> Optional[Dict[str, Any]]:
     url = CARD_URL.format(article_id=article_id)
     data = await _fetch(client, url)
@@ -87,7 +97,8 @@ async def get_card_details(client: httpx.AsyncClient, article_id: int) -> Option
         "feedbacks": p.get("feedbacks", 0),
     }
 
-async def get_feedbacks(client: httpx.AsyncClient, article_id: int, max_feedbacks: int = 100) -> List[Dict[str, Any]]:
+
+async def get_feedbacks(client: httpx.AsyncClient, article_id: int, max_feedbacks: int = 60) -> List[Dict[str, Any]]:
     all_fb = []
     page = 0
     batch = 20
@@ -108,6 +119,7 @@ async def get_feedbacks(client: httpx.AsyncClient, article_id: int, max_feedback
             })
         page += 1
     return all_fb[:max_feedbacks]
+
 
 def analyze_feedbacks(feedbacks: List[Dict[str, Any]], price: float) -> Optional[Dict[str, Any]]:
     if not feedbacks:
@@ -152,7 +164,8 @@ def analyze_feedbacks(feedbacks: List[Dict[str, Any]], price: float) -> Optional
         "estimated_revenue_7d_high": round(est_orders_7d_high * price, 2),
     }
 
-async def analyze_niche(query: str, top_n: int = 10, max_feedbacks: int = 80, search_pages: int = 2) -> Dict[str, Any]:
+
+async def analyze_niche(query: str, top_n: int = 8, max_feedbacks: int = 60, search_pages: int = 1) -> Dict[str, Any]:
     start_time = datetime.utcnow().isoformat()
     async with httpx.AsyncClient(follow_redirects=True) as client:
         search_results = await search_wb(client, query, pages=search_pages)

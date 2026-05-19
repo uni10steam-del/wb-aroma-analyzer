@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Дашборд — WB Niche Analyzer</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Дашборд</h1>
+            <p>История анализов, тренды ниш, прогнозы</p>
+            <nav>
+                <a href="/" class="btn btn-secondary">← Новый анализ</a>
+            </nav>
+        </header>
+
+        <main>
+            <section id="niches-list">
+                <h2>📁 Сохраненные ниши</h2>
+                <div class="table-wrapper">
+                    <table id="nichesTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Запрос</th>
+                                <th>Дата</th>
+                                <th>Конкурентов</th>
+                                <th>Ср. цена</th>
+                                <th>Медиана заказов/мес</th>
+                                <th>Прогноз новичка (реал.)</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="detail-view" class="hidden">
+                <div class="detail-header">
+                    <h2 id="detail-title">Детали ниши</h2>
+                    <button onclick="closeDetail()" class="btn btn-small">✕ Закрыть</button>
+                </div>
+
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-label">Средняя цена</div>
+                        <div class="metric-value" id="d-avg-price">—</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Ценовой диапазон</div>
+                        <div class="metric-value" id="d-price-range">—</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Медиана заказов/мес</div>
+                        <div class="metric-value" id="d-median-orders">—</div>
+                    </div>
+                    <div class="metric-card highlight">
+                        <div class="metric-label">Прогноз нового товара (3%)</div>
+                        <div class="metric-value" id="d-forecast">—</div>
+                    </div>
+                </div>
+
+                <div class="charts-row">
+                    <div class="chart-box">
+                        <h3>Цены конкурентов</h3>
+                        <canvas id="priceChart"></canvas>
+                    </div>
+                    <div class="chart-box">
+                        <h3>Оценка выручки/мес</h3>
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-box wide">
+                    <h3>Конкуренты: заказы vs цена</h3>
+                    <canvas id="scatterChart"></canvas>
+                </div>
+
+                <div class="table-wrapper">
+                    <h3>Топ конкуренты</h3>
+                    <table id="competitorsTable">
+                        <thead>
+                            <tr>
+                                <th>Артикул</th>
+                                <th>Название</th>
+                                <th>Бренд</th>
+                                <th>Цена</th>
+                                <th>Рейтинг</th>
+                                <th>Отзывов (30д)</th>
+                                <th>Заказов/мес (оценка)</th>
+                                <th>Выручка/мес (оценка)</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>WB Niche Analyzer v2.0 | PostgreSQL + FastAPI + Railway</p>
+        </footer>
+    </div>
+
+    <script src="/static/js/dashboard.js"></script>
+</body>
+</html>

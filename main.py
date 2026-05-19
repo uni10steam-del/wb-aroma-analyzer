@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="WB Niche Analyzer",
     description="Анализ ниши Wildberries: парсинг, хранение в PostgreSQL, дашборд",
-    version="2.0.0",
+    version="2.1.0",
 )
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -58,9 +58,9 @@ async def health():
 @app.get("/analyze")
 async def analyze(
     query: str = Query(..., description="Поисковый запрос на WB"),
-    top_n: int = Query(10, ge=1, le=30),
-    max_feedbacks: int = Query(80, ge=20, le=200),
-    search_pages: int = Query(2, ge=1, le=5),
+    top_n: int = Query(8, ge=1, le=20, description="Сколько карточек анализировать (меньше = меньше блокировок)"),
+    max_feedbacks: int = Query(60, ge=20, le=100, description="Макс. отзывов на карточку"),
+    search_pages: int = Query(1, ge=1, le=3, description="Страниц поиска (1 = меньше блокировок)"),
     save: bool = Query(True, description="Сохранить результат в PostgreSQL"),
     db: AsyncSession = Depends(get_db),
 ):
@@ -89,9 +89,9 @@ async def analyze_post(body: dict, db: AsyncSession = Depends(get_db)):
     try:
         result = await analyze_niche(
             query=query,
-            top_n=body.get("top_n", 10),
-            max_feedbacks=body.get("max_feedbacks", 80),
-            search_pages=body.get("search_pages", 2),
+            top_n=body.get("top_n", 8),
+            max_feedbacks=body.get("max_feedbacks", 60),
+            search_pages=body.get("search_pages", 1),
         )
         if body.get("save", True) and not result.get("error"):
             try:

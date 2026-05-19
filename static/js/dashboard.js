@@ -41,16 +41,13 @@ async function showDetail(nicheId) {
         const ms = data.market_summary || {};
         const nf = ms.new_product_forecast || {};
 
-        // Metrics
         document.getElementById('d-avg-price').textContent = ms.avg_price ? ms.avg_price.toFixed(0) + ' ₽' : '—';
         document.getElementById('d-price-range').textContent = (ms.min_price && ms.max_price) ? `${ms.min_price.toFixed(0)} – ${ms.max_price.toFixed(0)} ₽` : '—';
         document.getElementById('d-median-orders').textContent = ms.median_orders_30d_low ? `${ms.median_orders_30d_low} – ${ms.median_orders_30d_high} шт/мес` : '—';
         document.getElementById('d-forecast').textContent = nf.realistic_revenue_30d ? nf.realistic_revenue_30d.toLocaleString('ru-RU') + ' ₽/мес' : '—';
 
-        // Charts
         renderCharts(data);
 
-        // Competitors table
         const cbody = document.querySelector('#competitorsTable tbody');
         cbody.innerHTML = '';
         (data.competitors || []).forEach(c => {
@@ -80,7 +77,6 @@ async function showDetail(nicheId) {
 function closeDetail() {
     document.getElementById('detail-view').classList.add('hidden');
     document.getElementById('niches-list').classList.remove('hidden');
-    // Destroy charts
     Object.values(currentCharts).forEach(c => c.destroy());
     currentCharts = {};
 }
@@ -105,7 +101,6 @@ function renderCharts(data) {
         }
     };
 
-    // Price chart
     const ctx1 = document.getElementById('priceChart').getContext('2d');
     currentCharts.price = new Chart(ctx1, {
         type: 'bar',
@@ -123,7 +118,6 @@ function renderCharts(data) {
         options: commonOptions
     });
 
-    // Revenue chart
     const ctx2 = document.getElementById('revenueChart').getContext('2d');
     currentCharts.revenue = new Chart(ctx2, {
         type: 'bar',
@@ -151,7 +145,6 @@ function renderCharts(data) {
         options: commonOptions
     });
 
-    // Scatter: orders vs price
     const ctx3 = document.getElementById('scatterChart').getContext('2d');
     currentCharts.scatter = new Chart(ctx3, {
         type: 'scatter',

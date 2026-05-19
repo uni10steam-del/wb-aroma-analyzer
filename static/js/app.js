@@ -43,7 +43,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const ms = data.market_summary || {};
         const nf = ms.new_product_forecast || {};
 
-        // Summary
         summaryDiv.innerHTML = `
             <div class="summary-grid">
                 <div class="summary-card">
@@ -65,7 +64,6 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
 
-        // Forecast
         if (nf) {
             forecastDiv.innerHTML = `
                 <div class="forecast-box">
@@ -91,7 +89,6 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
         }
 
-        // Competitors table
         const comps = data.competitors || [];
         let tableHTML = `
             <div class="table-wrapper">

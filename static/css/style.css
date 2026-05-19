@@ -1,4 +1,3 @@
-/* === WB Niche Analyzer Styles === */
 :root {
     --bg: #0f172a;
     --bg-card: #1e293b;
@@ -33,7 +32,6 @@ body {
     padding: 2rem 1rem;
 }
 
-/* Header */
 header {
     text-align: center;
     margin-bottom: 2rem;
@@ -57,7 +55,6 @@ header p {
 
 nav { margin-top: 0.5rem; }
 
-/* Buttons */
 .btn {
     display: inline-flex;
     align-items: center;
@@ -87,7 +84,6 @@ nav { margin-top: 0.5rem; }
 
 .btn-small { padding: 0.3rem 0.7rem; font-size: 0.85rem; }
 
-/* Cards */
 .analyzer-card, .metric-card, .chart-box {
     background: var(--bg-card);
     border: 1px solid var(--border);
@@ -103,10 +99,7 @@ nav { margin-top: 0.5rem; }
     color: var(--text);
 }
 
-/* Form */
-.form-group {
-    margin-bottom: 1rem;
-}
+.form-group { margin-bottom: 1rem; }
 
 .form-group label {
     display: block;
@@ -147,7 +140,6 @@ nav { margin-top: 0.5rem; }
 .checkbox input { width: auto; }
 .checkbox label { margin: 0; color: var(--text); }
 
-/* Loader */
 .loader {
     text-align: center;
     padding: 2rem;
@@ -168,7 +160,6 @@ nav { margin-top: 0.5rem; }
 
 .hidden { display: none !important; }
 
-/* Results */
 .results { animation: fadeIn 0.4s ease; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -240,7 +231,6 @@ nav { margin-top: 0.5rem; }
 .forecast-item.real .f-value { color: var(--success); }
 .forecast-item.opt .f-value { color: var(--accent); }
 
-/* Competitors table */
 .table-wrapper { overflow-x: auto; }
 
 table {
@@ -270,7 +260,6 @@ td .price { font-weight: 600; color: var(--accent); }
 td .rating { color: var(--warning); }
 td .orders { font-weight: 500; }
 
-/* Error */
 .error {
     background: rgba(248,113,113,0.1);
     border: 1px solid var(--danger);
@@ -280,7 +269,6 @@ td .orders { font-weight: 500; }
     margin-top: 1rem;
 }
 
-/* Dashboard specific */
 #niches-list { margin-bottom: 2rem; }
 
 .metrics-grid {
@@ -344,7 +332,6 @@ td .orders { font-weight: 500; }
 
 .detail-header h2 { font-size: 1.4rem; }
 
-/* Footer */
 footer {
     text-align: center;
     padding: 2rem 0;
@@ -354,7 +341,6 @@ footer {
     margin-top: 2rem;
 }
 
-/* Responsive */
 @media (max-width: 768px) {
     .form-row { grid-template-columns: 1fr; }
     .charts-row { grid-template-columns: 1fr; }

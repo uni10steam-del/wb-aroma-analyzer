@@ -12,11 +12,8 @@
         <header>
             <h1>🚀 WB Niche Analyzer</h1>
             <p>Анализ ниши Wildberries: парсинг конкурентов, оценка продаж, прогноз нового товара</p>
-            <nav>
-                <a href="/dashboard" class="btn btn-secondary">📊 Дашборд</a>
-            </nav>
+            <nav><a href="/dashboard" class="btn btn-secondary">📊 Дашборд</a></nav>
         </header>
-
         <main>
             <section class="analyzer-card">
                 <h2>Новый анализ</h2>
@@ -45,28 +42,23 @@
                     </div>
                     <button type="submit" class="btn btn-primary">🔍 Запустить анализ</button>
                 </form>
-
                 <div id="loader" class="loader hidden">
                     <div class="spinner"></div>
                     <p>Собираем данные с WB... Это может занять 20–40 секунд</p>
                 </div>
-
                 <div id="results" class="results hidden">
                     <h3>📋 Результат анализа</h3>
                     <div id="summary"></div>
                     <div id="forecast"></div>
                     <div id="competitors"></div>
                 </div>
-
                 <div id="error" class="error hidden"></div>
             </section>
         </main>
-
         <footer>
             <p>WB Niche Analyzer v2.0 | PostgreSQL + FastAPI + Railway</p>
         </footer>
     </div>
-
     <script src="/static/js/app.js"></script>
 </body>
 </html>

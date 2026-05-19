@@ -1,7 +1,3 @@
-"""
-WB Parser for niche analysis.
-Niche: автомобильные ароматизаторы (car air fresheners)
-"""
 import asyncio
 import httpx
 import random
@@ -23,7 +19,6 @@ DEFAULT_HEADERS = {
     "Connection": "keep-alive",
 }
 
-# WB endpoints
 SEARCH_URL = (
     "https://search.wb.ru/exactmatch/ru/common/v4/search"
     "?appType=1&curr=rub&dest=-1257786&page={page}"
@@ -38,12 +33,9 @@ FEEDBACK_URL = (
     "?take={take}&skip={skip}&order=date&isSorted=true"
 )
 
-# Semaphore to avoid hammering WB
 REQUEST_SEMAPHORE = asyncio.Semaphore(3)
 
-
 async def _fetch(client: httpx.AsyncClient, url: str, retries: int = 2) -> Optional[dict]:
-    """Fetch JSON with retries and polite delays."""
     for attempt in range(retries + 1):
         try:
             async with REQUEST_SEMAPHORE:
@@ -58,14 +50,8 @@ async def _fetch(client: httpx.AsyncClient, url: str, retries: int = 2) -> Optio
                 await asyncio.sleep(1.5)
     return None
 
-
-async def search_wb(
-    client: httpx.AsyncClient,
-    query: str,
-    pages: int = 2
-) -> List[Dict[str, Any]]:
-    """Search WB catalog and return product list."""
-    products: List[Dict[str, Any]] = []
+async def search_wb(client: httpx.AsyncClient, query: str, pages: int = 2) -> List[Dict[str, Any]]:
+    products = []
     for page in range(1, pages + 1):
         url = SEARCH_URL.format(page=page, query=query.replace(" ", "%20"))
         data = await _fetch(client, url)
@@ -77,21 +63,14 @@ async def search_wb(
                 "id": p.get("id"),
                 "name": p.get("name", "").strip(),
                 "brand": p.get("brand", ""),
-                "price": (
-                    (p.get("salePriceU", 0) or p.get("priceU", 0)) / 100
-                ),
+                "price": ((p.get("salePriceU", 0) or p.get("priceU", 0)) / 100),
                 "rating": p.get("rating", 0),
                 "feedbacks": p.get("feedbacks", 0),
                 "supplier": p.get("supplier", ""),
             })
     return products
 
-
-async def get_card_details(
-    client: httpx.AsyncClient,
-    article_id: int
-) -> Optional[Dict[str, Any]]:
-    """Fetch detailed card info."""
+async def get_card_details(client: httpx.AsyncClient, article_id: int) -> Optional[Dict[str, Any]]:
     url = CARD_URL.format(article_id=article_id)
     data = await _fetch(client, url)
     if not data:
@@ -103,29 +82,17 @@ async def get_card_details(
     return {
         "id": article_id,
         "name": p.get("name", "").strip(),
-        "price": (
-            (p.get("salePriceU", 0) or p.get("priceU", 0)) / 100
-        ),
+        "price": ((p.get("salePriceU", 0) or p.get("priceU", 0)) / 100),
         "rating": p.get("rating", 0),
         "feedbacks": p.get("feedbacks", 0),
     }
 
-
-async def get_feedbacks(
-    client: httpx.AsyncClient,
-    article_id: int,
-    max_feedbacks: int = 100
-) -> List[Dict[str, Any]]:
-    """Fetch feedbacks with pagination."""
-    all_fb: List[Dict[str, Any]] = []
+async def get_feedbacks(client: httpx.AsyncClient, article_id: int, max_feedbacks: int = 100) -> List[Dict[str, Any]]:
+    all_fb = []
     page = 0
     batch = 20
     while len(all_fb) < max_feedbacks:
-        url = FEEDBACK_URL.format(
-            article_id=article_id,
-            take=batch,
-            skip=page * batch
-        )
+        url = FEEDBACK_URL.format(article_id=article_id, take=batch, skip=page * batch)
         data = await _fetch(client, url)
         if not data:
             break
@@ -142,17 +109,10 @@ async def get_feedbacks(
         page += 1
     return all_fb[:max_feedbacks]
 
-
 def analyze_feedbacks(feedbacks: List[Dict[str, Any]], price: float) -> Optional[Dict[str, Any]]:
-    """
-    Proxy sales estimation from feedback velocity.
-    For car air fresheners review rate is ~10-18% (cheap impulse buy).
-    We use conservative multiplier 5.5-10x.
-    """
     if not feedbacks:
         return None
-
-    dates: List[date] = []
+    dates = []
     for fb in feedbacks:
         d_str = fb.get("date", "")
         if not d_str:
@@ -162,27 +122,20 @@ def analyze_feedbacks(feedbacks: List[Dict[str, Any]], price: float) -> Optional
             dates.append(dt.date())
         except Exception:
             continue
-
     if not dates:
         return None
-
     dates.sort()
     today = datetime.now().date()
     last_30 = [d for d in dates if d >= today - timedelta(days=30)]
     last_7 = [d for d in dates if d >= today - timedelta(days=7)]
-
-    # Multipliers for car air fresheners niche (low review rate)
-    low_mult = 5.5   # ~18% leave review
-    high_mult = 10.0  # ~10% leave review
-
+    low_mult = 5.5
+    high_mult = 10.0
     reviews_30d = len(last_30)
     reviews_7d = len(last_7)
-
     est_orders_30d_low = int(reviews_30d * low_mult)
     est_orders_30d_high = int(reviews_30d * high_mult)
     est_orders_7d_low = int(reviews_7d * low_mult)
     est_orders_7d_high = int(reviews_7d * high_mult)
-
     return {
         "total_reviews": len(dates),
         "reviews_last_30d": reviews_30d,
@@ -199,21 +152,9 @@ def analyze_feedbacks(feedbacks: List[Dict[str, Any]], price: float) -> Optional
         "estimated_revenue_7d_high": round(est_orders_7d_high * price, 2),
     }
 
-
-async def analyze_niche(
-    query: str,
-    top_n: int = 10,
-    max_feedbacks: int = 80,
-    search_pages: int = 2
-) -> Dict[str, Any]:
-    """
-    Full pipeline: search → details → feedbacks → analysis.
-    Returns structured report for the niche.
-    """
+async def analyze_niche(query: str, top_n: int = 10, max_feedbacks: int = 80, search_pages: int = 2) -> Dict[str, Any]:
     start_time = datetime.utcnow().isoformat()
-
     async with httpx.AsyncClient(follow_redirects=True) as client:
-        # 1. Search
         search_results = await search_wb(client, query, pages=search_pages)
         if not search_results:
             return {
@@ -223,8 +164,6 @@ async def analyze_niche(
                 "competitors": [],
                 "market_summary": {},
             }
-
-        # Filter unique with feedbacks
         seen = set()
         candidates = []
         for item in search_results:
@@ -234,19 +173,14 @@ async def analyze_niche(
                 candidates.append(item)
             if len(candidates) >= top_n:
                 break
-
         competitors = []
         for item in candidates:
             art = item["id"]
-            # Details (enrich from search data if card fails)
             details = await get_card_details(client, art)
             if not details:
                 details = item
-
-            # Feedbacks
             fbs = await get_feedbacks(client, art, max_feedbacks=max_feedbacks)
             sales = analyze_feedbacks(fbs, details["price"])
-
             competitors.append({
                 "article_id": art,
                 "name": details["name"],
@@ -257,8 +191,6 @@ async def analyze_niche(
                 "scraped_feedbacks": len(fbs),
                 "sales_estimate": sales,
             })
-
-    # Market summary
     valid = [c for c in competitors if c["sales_estimate"]]
     summary = {}
     if valid:
@@ -267,10 +199,8 @@ async def analyze_niche(
         orders_high_30 = [c["sales_estimate"]["estimated_orders_30d_high"] for c in valid]
         rev_low_30 = [c["sales_estimate"]["estimated_revenue_30d_low"] for c in valid]
         rev_high_30 = [c["sales_estimate"]["estimated_revenue_30d_high"] for c in valid]
-
         median_orders_low = sorted(orders_low_30)[len(orders_low_30) // 2]
         median_orders_high = sorted(orders_high_30)[len(orders_high_30) // 2]
-
         summary = {
             "competitors_analyzed": len(valid),
             "avg_price": round(sum(prices) / len(prices), 2),
@@ -289,7 +219,6 @@ async def analyze_niche(
                 "optimistic_revenue_30d": round(max(1, int(median_orders_high * 0.10)) * (sum(prices)/len(prices)), 2),
             }
         }
-
     return {
         "query": query,
         "analyzed_at": start_time,
